@@ -96,7 +96,8 @@ MISPvars () {
   # Debian flavoured
   elif [[ -f "/etc/debian_version" ]]; then
     WWW_USER="www-data"
-    SUDO_WWW="sudo -H -u ${WWW_USER} "
+    PROXYENV=$(. ./proxyenv.sh)
+    SUDO_WWW="sudo -H -u ${WWW_USER} ${PROXYENV} "
   # OpenBSD
   elif [[ "$(uname -s)" == "OpenBSD" ]]; then
     WWW_USER="www"
