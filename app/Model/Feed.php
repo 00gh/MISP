@@ -167,7 +167,7 @@ class Feed extends AppModel
         if (!empty($event['Tag'])) {
             $tags = Hash::extract($event, 'Tag.{n}.name');
         }
-        
+
         // Check the tag rules
         if (!empty($rules['tags']['OR'])) {
             if (empty(array_intersect($rules['tags']['OR'], $tags))) {
@@ -454,7 +454,7 @@ class Feed extends AppModel
             $settings = array_merge($settings, $feed['Feed']['settings']['common']);
         }
         $resultArray = $complexTypeTool->checkComplexRouter($data, $type, $settings);
-        $this->Attribute = ClassRegistry::init('Attribute');
+        $this->Attribute = ClassRegistry::init('MispAttribute');
         $typeDefinitions = $this->Attribute->typeDefinitions;
         foreach ($resultArray as &$value) {
             $definition = $typeDefinitions[$value['default_type']];
@@ -470,7 +470,7 @@ class Feed extends AppModel
         foreach ($data as $key => $value) {
             $values[] = $value['value'];
         }
-        $this->Attribute = ClassRegistry::init('Attribute');
+        $this->Attribute = ClassRegistry::init('MispAttribute');
         $redis = $this->setupRedis();
         if ($redis !== false) {
             $feeds = $this->find('all', array(
@@ -539,7 +539,7 @@ class Feed extends AppModel
         }
 
         if (!isset($this->Attribute)) {
-            $this->Attribute = ClassRegistry::init('Attribute');
+            $this->Attribute = ClassRegistry::init('MispAttribute');
         }
         $compositeTypes = $this->Attribute->getCompositeTypes();
 
@@ -548,7 +548,7 @@ class Feed extends AppModel
         $redisResultToAttributePosition = [];
 
         foreach ($attributes as $k => $attribute) {
-            if (in_array($attribute['type'], Attribute::NON_CORRELATING_TYPES, true)) {
+            if (in_array($attribute['type'], MispAttribute::NON_CORRELATING_TYPES, true)) {
                 continue; // attribute type is not correlateable
             }
             if (!empty($attribute['disable_correlation'])) {
@@ -559,7 +559,7 @@ class Feed extends AppModel
                 list($value1, $value2) = explode('|', $attribute['value']);
                 $parts = [$value1];
 
-                if (!in_array($attribute['type'], Attribute::PRIMARY_ONLY_CORRELATING_TYPES, true)) {
+                if (!in_array($attribute['type'], MispAttribute::PRIMARY_ONLY_CORRELATING_TYPES, true)) {
                     $parts[] = $value2;
                 }
             } else {
@@ -937,7 +937,7 @@ class Feed extends AppModel
 
     private function passesURLParamFilters($url_params, $event): bool
     {
-        $this->Attribute = ClassRegistry::init('Attribute');
+        $this->Attribute = ClassRegistry::init('MispAttribute');
         if (!empty($url_params['timestamp'])) {
             $timestamps = $this->Attribute->setTimestampConditions($url_params['timestamp'], [], '', true);
             if (is_array($timestamps)) {
@@ -1162,12 +1162,9 @@ class Feed extends AppModel
     private function __prepareFilterRules($feed)
     {
         $filterRules = false;
-        if (isset($feed['Feed']['rules']) && !empty($feed['Feed']['rules'])) {
-            $filterRules = json_decode($feed['Feed']['rules'], true);
-            if ($filterRules === null) {
-                throw new Exception('Could not parse feed filter rules JSON: ' . json_last_error_msg(), json_last_error());
-            }
-            $filterRules['url_params'] = !empty($filterRules['url_params']) ? $this->jsonDecode($filterRules['url_params']) : [];
+        if (!empty($feed['Feed']['rules'])) {
+            $filterRules = JsonTool::decode($feed['Feed']['rules']);
+            $filterRules['url_params'] = !empty($filterRules['url_params']) ? JsonTool::decodeArray($filterRules['url_params']) : [];
         }
         return $filterRules;
     }
@@ -1639,7 +1636,7 @@ class Feed extends AppModel
         $redis->del('misp:feed_cache:' . $feedId);
 
         $k = 0;
-        $this->Attribute = ClassRegistry::init('Attribute');
+        $this->Attribute = ClassRegistry::init('MispAttribute');
         foreach ($manifest as $uuid => $event) {
             try {
                 $event = $this->downloadAndParseEventFromFeed($feed, $uuid, $HttpSocket);
@@ -1651,10 +1648,10 @@ class Feed extends AppModel
             if (!empty($event['Event']['Attribute'])) {
                 $pipe = $redis->pipeline();
                 foreach ($event['Event']['Attribute'] as $attribute) {
-                    if (!in_array($attribute['type'], Attribute::NON_CORRELATING_TYPES, true)) {
+                    if (!in_array($attribute['type'], MispAttribute::NON_CORRELATING_TYPES, true)) {
                         if (in_array($attribute['type'], $this->Attribute->getCompositeTypes(), true)) {
                             $value = explode('|', $attribute['value']);
-                            if (in_array($attribute['type'], Attribute::PRIMARY_ONLY_CORRELATING_TYPES, true)) {
+                            if (in_array($attribute['type'], MispAttribute::PRIMARY_ONLY_CORRELATING_TYPES, true)) {
                                 unset($value[1]);
                             }
                         } else {
@@ -1917,7 +1914,7 @@ class Feed extends AppModel
             'fields' => array('Server.id', 'Server.id')
         ));
         $feed_element_count = $redis->scard('misp:feed_cache:' . $id);
-        $temp_store = (new RandomTool())->random_str(false, 12);
+        $temp_store = RandomTool::random_str(false, 12);
         $params = array('misp:feed_temp:' . $temp_store);
         foreach ($other_feeds as $other_feed) {
             $params[] = 'misp:feed_cache:' . $other_feed;
@@ -2221,7 +2218,7 @@ class Feed extends AppModel
     private function getFollowRedirect(HttpSocket $HttpSocket, $url, $request, $iterations = 5)
     {
         for ($i = 0; $i < $iterations; $i++) {
-            $response = $HttpSocket->get($url, array(), $request);
+            $response = $HttpSocket->get($url, [], $request);
             if ($response->isRedirect()) {
                 $HttpSocket = $this->__setupHttpSocket(); // Replace $HttpSocket with fresh instance
                 $url = trim($response->getHeader('Location'), '=');
@@ -2230,7 +2227,7 @@ class Feed extends AppModel
             }
         }
 
-        throw new Exception("Maximum number of iteration reached.");
+        throw new Exception("Too many redirects when fetching $url.");
     }
 
     /**

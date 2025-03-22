@@ -1,5 +1,6 @@
 <?php
 App::uses('AppController', 'Controller');
+App::uses('AnalystData', 'Model');
 
 /**
  * @property EventReport $EventReport
@@ -604,7 +605,7 @@ class EventReportsController extends AppController
         } else {
             $report = $this->EventReport->fetchIfAuthorized($this->Auth->user(), $reportId, 'edit', true, false);
             if ($this->request->is('post')) {
-                $this->loadModel('Attribute');
+                $this->loadModel('MispAttribute');
                 $picture = $this->request->data['EventReport']['picture'];
                 $saveAsAttachmentConfig = false;
                 if ($this->Auth->user()['Role']['perm_site_admin']) {
@@ -615,7 +616,7 @@ class EventReportsController extends AppController
                 }
                 if ($saveAsAttachment) {
                     $saveAsAttachmentConfig['comment'] = $this->request->data['EventReport']['comment'] ?? __('Imported via Event Report');
-                    $saveAsAttachmentConfig['distribution'] = $this->request->data['EventReport']['distribution'] ?? $this->Attribute->defaultDistribution();
+                    $saveAsAttachmentConfig['distribution'] = $this->request->data['EventReport']['distribution'] ?? $this->MispAttribute->defaultDistribution();
                 }
                 $uploadResult = $this->EventReport->uploadPicture($picture, $report, $saveAsAttachmentConfig);
                 if ($uploadResult['success']) {
@@ -892,8 +893,7 @@ class EventReportsController extends AppController
                 $savedReport['EventReport'][$field] = $newReport['EventReport'][$field];
             }
         }
-        $this->loadModel('AnalystData');
-        foreach ($this->AnalystData::ANALYST_DATA_TYPES as $type) {
+        foreach (AnalystData::ANALYST_DATA_TYPES as $type) {
             if (!empty($newReport['EventReport'][$type])) {
                 $savedReport['EventReport'][$type] = $newReport['EventReport'][$type];
             }

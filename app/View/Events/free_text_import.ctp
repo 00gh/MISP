@@ -1,12 +1,12 @@
 <div class="freetext">
-<?= $this->Form->create('Attribute', array('id')); ?>
+<?= $this->Form->create('MispAttribute', array('id')); ?>
     <fieldset>
         <legend><?php echo __('Freetext Import Tool'); ?></legend>
         <div class="add_attribute_fields">
         <p><?php echo __('Paste a list of IOCs into the field below for automatic detection.');?></p>
             <?php
-            echo $this->Form->hidden('event_id');
-            echo $this->Form->input('value', array(
+            echo $this->Form->hidden('Attribute.event_id');
+            echo $this->Form->input('Attribute.value', array(
                 'type' => 'textarea',
                 'error' => array('escape' => false),
                 'div' => 'input clear',

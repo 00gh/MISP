@@ -1,5 +1,6 @@
 <?php
 App::uses('AppModel', 'Model');
+App::uses('RedisTool', 'Tools');
 
 /**
  * @property User $User
@@ -46,17 +47,28 @@ class UserLoginProfile extends AppModel
     private function browscapGetBrowser()
     {
         $logger = new \Monolog\Logger('name');
-        $streamHandler = new \Monolog\Handler\StreamHandler('php://stderr', \Monolog\Logger::INFO);
+        $streamHandler = new \Monolog\Handler\StreamHandler('php://stderr', \Monolog\Level::Info);
         $logger->pushHandler($streamHandler);
-
+        try {
+            $redis = RedisTool::init();
+        } catch (Exception $e) {
+            $redis = false;
+        }
         if (function_exists('apcu_fetch')) {
             App::uses('ApcuCacheTool', 'Tools');
             $cache = new ApcuCacheTool('misp:browscap');
+        } else if (class_exists('\MatthiasMullie\Scrapbook\Adapters\Redis') && $redis) {
+            $redis_cache = new \MatthiasMullie\Scrapbook\Adapters\Redis($redis);
+            $cache = new \MatthiasMullie\Scrapbook\Psr16\SimpleCache($redis_cache);
+        } else if (class_exists('\League\Flysystem\Local\LocalFilesystemAdapter') && class_exists('\MatthiasMullie\Scrapbook\Adapters\Flysystem')) {
+            $adapter = new \League\Flysystem\Local\LocalFilesystemAdapter(APP . '/tmp/cache/browscap', null, LOCK_EX);
+            $filesystem = new \League\Flysystem\Filesystem($adapter);
+            $scrapbookadapter = new \MatthiasMullie\Scrapbook\Adapters\Flysystem($filesystem);
+            $cache = new \MatthiasMullie\Scrapbook\Psr16\SimpleCache($scrapbookadapter);
         } else {
             $fileCache = new \Doctrine\Common\Cache\FilesystemCache(UserLoginProfile::BROWSER_CACHE_DIR);
             $cache = new \Roave\DoctrineSimpleCache\SimpleCacheAdapter($fileCache);
         }
-
         try {
             $bc = new \BrowscapPHP\Browscap($cache, $logger);
             return $bc->getBrowser();
@@ -77,8 +89,8 @@ class UserLoginProfile extends AppModel
     public function countryByIp($ip)
     {
         if (class_exists('GeoIp2\Database\Reader')) {
-            $geoDbReader = new GeoIp2\Database\Reader(UserLoginProfile::GEOIP_DB_FILE);
             try {
+                $geoDbReader = new GeoIp2\Database\Reader(UserLoginProfile::GEOIP_DB_FILE);
                 $record = $geoDbReader->country($ip);
                 return $record->country->isoCode;
             } catch (InvalidArgumentException $e) {
@@ -270,7 +282,7 @@ class UserLoginProfile extends AppModel
             $body->set('misp_org', Configure::read('MISP.org'));
             $body->set('date_time', $datetime);
             // Fetch user that contains also PGP or S/MIME keys for e-mail encryption
-            $this->User->sendEmail($user, $body, false, "[" . Configure::read('MISP.org') . " MISP] New sign in.");
+            $this->User->sendEmail($user, $body, false, "[" . Configure::read('MISP.org') . " MISP] New sign-in");
         }
     }
 
@@ -289,7 +301,7 @@ class UserLoginProfile extends AppModel
         $admins = array_keys($this->User->getSiteAdmins());
         $allAdmins = array_unique(array_merge($orgAdmins, $admins));
 
-        $subject = __("[%s MISP] Suspicious login reported.", Configure::read('MISP.org'));
+        $subject = __("[%s MISP] Suspicious login reported", Configure::read('MISP.org'));
         foreach ($allAdmins as $adminUserId) {
             $admin = $this->User->find('first', array(
                 'recursive' => -1,
@@ -312,7 +324,7 @@ class UserLoginProfile extends AppModel
             $body->set('date_time', $date_time);
             $body->set('suspiciousness_reason', $suspiciousness_reason);
             // inform the user
-            $this->User->sendEmail($user, $body, false, "[" . Configure::read('MISP.org') . " MISP] Suspicious login with your account.");
+            $this->User->sendEmail($user, $body, false, "[" . Configure::read('MISP.org') . " MISP] Suspicious login with your account");
 
             // inform the org admin
             $body = new SendEmailTemplate('userloginprofile_suspicious_orgadmin');
@@ -329,7 +341,7 @@ class UserLoginProfile extends AppModel
                     'recursive' => -1,
                     'conditions' => ['User.id' => $orgAdminID]
                 ));
-                $this->User->sendEmail($org_admin, $body, false, "[" . Configure::read('MISP.org') . " MISP] Suspicious login detected.");
+                $this->User->sendEmail($org_admin, $body, false, "[" . Configure::read('MISP.org') . " MISP] Suspicious login detected");
             }            
         }
     }

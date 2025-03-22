@@ -759,7 +759,7 @@ class EventReport extends AppModel
 
     public function replacePicturesReferenceWithB64Value($content, $event_id, $user)
     {
-        $this->Attribute = ClassRegistry::init('Attribute');
+        $this->MispAttribute = ClassRegistry::init('MispAttribute');
         $matches = [];
         $rePictureElement = sprintf('/(?<!@)!\[[^\[\]\(\)]+\]\((?<filename>[a-zA-Z0-9_\/\-]+(?>\.(?>%s))?)\)/m', implode('|', self::SUPPORTED_IMAGES));
         $reUUID4 = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
@@ -797,12 +797,12 @@ class EventReport extends AppModel
             $uuid = $match['uuid'];
 
             try {
-                $attribute = $this->Attribute->fetchAttributeSimple($user, [
+                $attribute = $this->MispAttribute->fetchAttributeSimple($user, [
                     'conditions' => [
                         'Attribute.uuid' => $uuid,
                     ]
                 ]);
-                $b64 = $this->Attribute->base64EncodeAttachment($attribute['Attribute']);
+                $b64 = $this->MispAttribute->base64EncodeAttachment($attribute['Attribute']);
                 $ext = strtolower(pathinfo($attribute['Attribute']['value'], PATHINFO_EXTENSION));
                 if ($ext === 'svg') {
                     $mime = 'image/svg+xml';
@@ -1520,7 +1520,7 @@ class EventReport extends AppModel
 
             if (!empty($tmp_name) && is_uploaded_file($tmp_name)) {
                 if (!empty($saveAsAttachmentConfig)) {
-                    $this->Attribute = ClassRegistry::init('Attribute');
+                    $this->MispAttribute = ClassRegistry::init('MispAttribute');
                     $tmpfile = new File($tmp_name);
                     $attribute = [
                         'Attribute' => [
@@ -1535,8 +1535,8 @@ class EventReport extends AppModel
                             'sharing_group_id' => isset($saveAsAttachmentConfig['sharing_group_id']) ? $saveAsAttachmentConfig['sharing_group_id'] : 0,
                         ]
                     ];
-                    $this->Attribute->create();
-                    $attributeSaveResult = $this->Attribute->save($attribute);
+                    $this->MispAttribute->create();
+                    $attributeSaveResult = $this->MispAttribute->save($attribute);
                     if (!empty($attributeSaveResult)) {
                         $saveResult['success'] = true;
                         $saveResult['attribute_uuid'] = $attributeSaveResult['Attribute']['uuid'];

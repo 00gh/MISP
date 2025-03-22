@@ -110,8 +110,7 @@ class AnalystData extends AppModel
                 ],
             ]
         ]);
-        $this->Org = ClassRegistry::init('Organisation');
-        $this->Orgc = ClassRegistry::init('Organisation');
+        $this->Org = $this->Orgc = ClassRegistry::init('Organisation');
         if (in_array($this->alias, self::ANALYST_DATA_TYPES)) {
             $this->schema();
             $this->_schema['distribution']['default'] = Configure::read('MISP.default_analyst_data_distribution') ?? 1;
@@ -121,16 +120,24 @@ class AnalystData extends AppModel
     public function afterFind($results, $primary = false)
     {
         parent::afterFind($results, $primary);
-
         $this->setUser();
-        foreach ($results as $i => $v) {
-            $results[$i][$this->alias]['note_type'] = $this->current_type_id;
-            $results[$i][$this->alias]['note_type_name'] = $this->current_type;
+        foreach ($results as &$v) {
+            $v[$this->alias]['note_type'] = $this->current_type_id;
+            $v[$this->alias]['note_type_name'] = $this->current_type;
 
-            $results[$i] = $this->rearrangeOrganisation($results[$i], $this->current_user);
-            $results[$i] = $this->rearrangeSharingGroup($results[$i], $this->current_user);
+            $v = $this->rearrangeOrganisation($v);
+            $v = $this->rearrangeSharingGroup($v, $this->current_user);
 
-            $results[$i][$this->alias]['_canEdit'] = $this->canEditAnalystData($this->current_user, $v, $this->alias);
+            $v[$this->alias]['_canEdit'] = $this->canEditAnalystData($this->current_user, $v, $this->alias);
+            if (!empty($this->fetchRecursive) && !empty($v[$this->alias]['uuid'])) {
+                $this->Note = ClassRegistry::init('Note');
+                $this->Opinion = ClassRegistry::init('Opinion');
+                $this->Note->fetchRecursive = false;
+                $this->Opinion->fetchRecursive = false;
+                $v[$this->alias] = $this->fetchChildNotesAndOpinions($this->current_user, $v[$this->alias], false);
+                $this->Note->fetchRecursive = true;
+                $this->Opinion->fetchRecursive = true;
+            }
         }
         return $results;
     }
@@ -177,6 +184,9 @@ class AnalystData extends AppModel
         $this->data[$this->current_type]['created'] = (new DateTime($this->data[$this->current_type]['created'], new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
 
         if (empty($this->data[$this->current_type]['id'])) {
+            if (!isset($this->data[$this->current_type]['distribution'])) {
+                $this->data[$this->current_type]['distribution'] = $this->_schema['distribution']['default'];
+            }
             if ($this->data[$this->current_type]['distribution'] != 4) {
                 $this->data[$this->current_type]['sharing_group_id'] = null;
             }

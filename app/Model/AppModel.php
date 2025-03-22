@@ -3196,7 +3196,7 @@ class AppModel extends Model
 
     private function removeDuplicateAttributeUUIDs()
     {
-        $this->Attribute = ClassRegistry::init('Attribute');
+        $this->Attribute = ClassRegistry::init('MispAttribute');
         $this->Log = ClassRegistry::init('Log');
         $duplicates = $this->Attribute->find('all', array(
             'fields' => array('Attribute.uuid', 'count(Attribute.uuid) as occurrence'),
@@ -3608,7 +3608,7 @@ class AppModel extends Model
                     continue;
                 }
                 // split the filter params into two lists, one for substring searches one for exact ones
-                if (is_string($f) && ($f[strlen($f) - 1] === '%' || $f[0] === '%')) {
+                if (is_string($f) && (str_ends_with($f, '%') || str_starts_with($f, '%'))) {
                     foreach ($keys as $key) {
                         if ($this->checkParam($key)) {
                             if ($operator === 'NOT') {
@@ -3796,7 +3796,7 @@ class AppModel extends Model
 
     public function generateRandomFileName()
     {
-        return (new RandomTool())->random_str(false, 12);
+        return RandomTool::random_str(false, 12);
     }
 
     /**
@@ -4225,7 +4225,7 @@ class AppModel extends Model
             ];
         }
         $this->Correlation = ClassRegistry::init('Correlation');
-        $this->Attribute = ClassRegistry::init('Attribute');
+        $this->Attribute = ClassRegistry::init('MispAttribute');
         if (!Configure::read('MISP.background_jobs')) {
             $this->Correlation->truncate($user, 'Legacy');
             $this->Attribute->generateCorrelation();

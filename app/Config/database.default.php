@@ -24,17 +24,23 @@
  *
  * unix_socket =>
  * For MySQL to connect via socket specify the `unix_socket` parameter instead of `host` and `port`
+ * 
+ * PDO::ATTR_STRINGIFY_FETCHES => true is required for compatibility with the MISP standard / pre 2.5 behaviour.
  */
 class DATABASE_CONFIG {
-    public $default = array(
-        'datasource' => 'Database/Mysql',
+
+    public $default = [
+        'datasource' => 'Database/MysqlObserverExtended',
         'persistent' => false,
         'host' => 'localhost',
         'login' => 'db login',
-        'port' => 3306, // MySQL & MariaDB
+        'port' => 3306,
         'password' => 'db password',
         'database' => 'misp',
         'prefix' => '',
         'encoding' => 'utf8',
-    );
+        'flags' => [
+            PDO::ATTR_STRINGIFY_FETCHES => true
+        ]
+	];
 }

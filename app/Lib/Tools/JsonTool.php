@@ -79,10 +79,27 @@ class JsonTool
      */
     public static function escapeNonUnicode($string)
     {
-        if (mb_check_encoding($string, 'UTF-8')) {
+        if ((function_exists('simdjson_is_valid_utf8') && simdjson_is_valid_utf8($string)) || mb_check_encoding($string, 'UTF-8')) {
             return $string; // string is valid unicode
         }
 
         return htmlspecialchars_decode(htmlspecialchars($string, ENT_SUBSTITUTE, 'UTF-8'));
+    }
+
+    /**
+     * Convert all integers in array or object to strings. Useful for php7.4 to php8 migration
+     * @param mixed $data
+     */
+    public static function convertIntegersToStrings(&$data)
+    {
+        if (is_array($data)) {
+            foreach ($data as &$value) {
+                if (is_int($value)) {
+                    $value = strval($value);
+                } elseif (is_array($value) || is_object($value)) {
+                    JsonTool::convertIntegersToStrings($value);
+                }
+            }
+        }
     }
 }

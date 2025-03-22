@@ -3600,6 +3600,8 @@ function testConnection(id) {
                     } else if (result.mismatch == "major") {
                         compatibility = "Incompatible";
                         compatibility_colour = "red";
+                    } else if (result.mismatch == "minor_compatible") {
+                        compatibility_colour = "green";
                     }
                 } else if (result.newer == "remote") {
                     colours.local = 'class="' + issue_colour + '"';
@@ -3612,8 +3614,15 @@ function testConnection(id) {
                     compatibility = "Proposal pull disabled (remote version < v2.4.111)";
                 }
                 if (result.mismatch != false && result.mismatch != "proposal") {
-                    if (result.newer == "remote") status_message = "Local instance outdated, update!";
-                    else status_message = "Remote outdated, notify admin!"
+                    if (result.newer == "remote") {
+                        status_message = "Local instance outdated, update!";
+                    } else if (result.newer == "local") {
+                        if (result.mismatch == "minor_compatible") {
+                            status_message = "Remote on 2.4, moving to 2.5 is recommended.";
+                        } else {
+                            status_message = "Remote outdated, notify admin!";
+                        }
+                    }
                     colours.status = 'class="' + issue_colour + '"';
                 }
                 var post_result;

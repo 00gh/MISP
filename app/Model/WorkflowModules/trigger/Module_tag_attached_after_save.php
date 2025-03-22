@@ -16,7 +16,7 @@ class Module_tag_attached_after_save extends WorkflowBaseTriggerModule
     public $params = [];
 
     private $Event;
-    private $Attribute;
+    private $MispAttribute;
 
     public function __construct()
     {
@@ -58,7 +58,7 @@ class Module_tag_attached_after_save extends WorkflowBaseTriggerModule
     public function normalizeData(array $data)
     {
         $this->Event = ClassRegistry::init('Event');
-        $this->Attribute = ClassRegistry::init('Attribute');
+        $this->MispAttribute = ClassRegistry::init('MispAttribute');
 
         if (empty($data['Tag'])) {
             return false;
@@ -67,7 +67,7 @@ class Module_tag_attached_after_save extends WorkflowBaseTriggerModule
 
         // We are missing data such as tags or objects.
         if (!empty($data['Tag']['attribute_id'])) {
-            $attribute = $this->Attribute->fetchAttribute($data['Tag']['attribute_id']);
+            $attribute = $this->MispAttribute->fetchAttribute($data['Tag']['attribute_id']);
     
             if (!empty($attribute['Object'])) {
                 $event['Event']['Object'] = [$attribute['Object']];

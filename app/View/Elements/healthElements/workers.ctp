@@ -83,11 +83,18 @@
                 $process = __('OK');
                 $message = __('The worker appears to be healthy.');
                 $icon_modifier = '';
-                if (!$worker['correct_user']) {
-                    $message = __('The worker was started with a user other than the apache user. MISP cannot check whether the worker is alive or not.');
-                    $style = "color:white;background-color:red;";
-                    $icon_modifier = ' icon-white';
-                    $process = __('Unknown');
+                if ($worker['correct_user'] !== true) {
+                    if ($worker['alive']) {
+                        $message = __('The worker appears to be healthy, but cannot determine the user of the process, most likely due to SELinux blocking MISP\'s access to it.');
+                        $style = "color:white;background-color:YellowGreen;";
+                        $icon_modifier = ' icon-white';
+                        $process = __('OK');
+                    } else {
+                        $message = __('The worker was started with a user other than the apache user. MISP cannot check whether the worker is alive or not.');
+                        $style = "color:white;background-color:red;";
+                        $icon_modifier = ' icon-white';
+                        $process = __('Unknown');
+                    }
                 } else if ($worker['alive'] === 'N/A') {
                         $process = __('Unknown');
                         $message = __('Cannot check whether the worker is alive or dead.');

@@ -335,7 +335,7 @@ class AdHocTrigger extends WorkflowBaseTriggerModule
     public $params = [];
 
     private $Event;
-    private $Attribute;
+    private $MispAttribute;
     private $EventReport;
 
     public function __construct()
@@ -411,8 +411,8 @@ class AdHocTrigger extends WorkflowBaseTriggerModule
     }
     private function getAttributes(array $user, array $filters): array
     {
-        $this->Attribute = ClassRegistry::init('Attribute');
-        $final = $this->Attribute->restSearch($user, 'json', $filters);
+        $this->MispAttribute = ClassRegistry::init('MispAttribute');
+        $final = $this->MispAttribute->restSearch($user, 'json', $filters);
         return JsonTool::decode($final->intoString())['response'];
     }
     private function getEventReports(array $user, array $filters): array
@@ -425,7 +425,7 @@ class AdHocTrigger extends WorkflowBaseTriggerModule
     public function normalizeData(array $data)
     {
         $this->Event = ClassRegistry::init('Event');
-        $this->Attribute = ClassRegistry::init('Attribute');
+        $this->MispAttribute = ClassRegistry::init('MispAttribute');
         $this->EventReport = ClassRegistry::init('EventReport');
 
         $event = parent::normalizeData($data);

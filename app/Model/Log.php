@@ -1017,7 +1017,7 @@ class Log extends AppModel
     private function __executeRecoveryAttribute($logEntry, $id)
     {
         if (empty($this->Attribute)) {
-            $this->Attribute = ClassRegistry::init('Attribute');
+            $this->Attribute = ClassRegistry::init('MispAttribute');
         }
         if (empty($this->GalaxyCluster)) {
             $this->GalaxyCluster = ClassRegistry::init('GalaxyCluster');
@@ -1118,7 +1118,7 @@ class Log extends AppModel
     private function __executeRecoveryShadowAttribute($logEntry, $id)
     {
         if (empty($this->Attribute)) {
-            $this->Attribute = ClassRegistry::init('Attribute');
+            $this->Attribute = ClassRegistry::init('MispAttribute');
         }
         if (empty($this->ShadowAttribute)) {
             $this->ShadowAttribute = ClassRegistry::init('ShadowAttribute');
@@ -1242,7 +1242,7 @@ class Log extends AppModel
     private function __executeRecoveryMispObject($logEntry)
     {
         if (empty($this->Attribute)) {
-            $this->Attribute = ClassRegistry::init('Attribute');
+            $this->Attribute = ClassRegistry::init('MispAttribute');
         }
         if (empty($this->MispObject)) {
             $this->MispObject = ClassRegistry::init('MispObject');

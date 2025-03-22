@@ -6,9 +6,9 @@ name: misp
 # events but only for the 2.4 and develop branches
 on:
   push:
-    branches: [ '2.4', develop, '2.4-develop', misp-stix, taxii, 'feature/analystData_flattening' ]
+    branches: [ '2.5', '2.4', develop, '2.4-develop', misp-stix, taxii ]
   pull_request:
-    branches: [ '2.4', develop, '2.4-develop', misp-stix ]
+    branches: [ '2.5', '2.4', develop, '2.4-develop', misp-stix ]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -21,7 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04]
-        php: ['7.4']
+        php: ['8.1', '8.3']
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -49,8 +49,8 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
-          extensions: mysql, mbstring, json, xml, opcache, readline, redis, gd, apcu
+          php-version: ${{ matrix.php }}a
+          extensions: mysql, mbstring, xml, opcache, readline, redis, gd, apcu
 
       - name: Initialize variables
         run: |
@@ -113,6 +113,12 @@ jobs:
           sudo cp app/Config/core.default.php app/Config/core.php
           sudo cp app/Config/config.default.php app/Config/config.php
           sudo cp build/email.php app/Config/email.php
+
+          # Enable CakeResque plugin #FIXME: change tests to use SimpleBackgroundJobs
+          sudo chmod 666 app/Config/bootstrap.php
+          echo 'CakePlugin::loadAll(array(
+              "CakeResque" => array("bootstrap" => true)
+          ));' >> app/Config/bootstrap.php
 
           # GPG setup
           sudo mkdir `pwd`/.gnupg
@@ -185,14 +191,14 @@ jobs:
           app/Console/cake Admin setSetting "Plugin.ZeroMQ_enable" 1
           app/Console/cake Admin setSetting "Plugin.ZeroMQ_audit_notifications_enable" 1
 
+      - name: Check if Redis is ready
+        run: app/Console/cake Admin redisReady
+
       - name: Update JSON
         run: app/Console/cake Admin updateJSON
 
       - name: Turn MISP live
         run: app/Console/cake Admin live 1
-
-      - name: Check if Redis is ready
-        run: app/Console/cake Admin redisReady
 
       - name: Start workers
         run: |

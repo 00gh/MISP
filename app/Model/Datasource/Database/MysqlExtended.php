@@ -16,13 +16,13 @@ class MysqlExtended extends Mysql
     ];
 
     /**
-     * Output MD5 as binary, that is faster and uses less memory
+     * Output SHA1 as binary, that is faster and uses less memory
      * @param string $value
      * @return string
      */
     public function cacheMethodHasher($value)
     {
-        return md5($value, true);
+        return sha1($value, true);
     }
 
     /**
@@ -38,10 +38,9 @@ class MysqlExtended extends Mysql
         $query = array_merge($this->_queryDefaults, $query);
 
         if (!empty($query['joins'])) {
-            $count = count($query['joins']);
-            for ($i = 0; $i < $count; $i++) {
-                if (is_array($query['joins'][$i])) {
-                    $query['joins'][$i] = $this->buildJoinStatement($query['joins'][$i]);
+            foreach ($query['joins'] as &$join) {
+                if (is_array($join)) {
+                    $join = $this->buildJoinStatement($join);
                 }
             }
         }
@@ -249,5 +248,45 @@ class MysqlExtended extends Mysql
         }
 
         return parent::value($data, $column, $null);
+    }
+
+    /**
+     * @param $result
+     * @return void
+     */
+    public function fetchVirtualField(&$result)
+    {
+        static $cache;
+
+        if (isset($result[0]) && is_array($result[0])) {
+            foreach ($result[0] as $field => $value) {
+                if (!str_contains($field, $this->virtualFieldSeparator)) {
+                    continue;
+                }
+
+                $virtualFields = $cache[$field] ?? null;
+                if ($virtualFields === null) {
+                    list($alias, $virtual) = explode($this->virtualFieldSeparator, $field);
+
+                    /** @var Model $Model */
+                    $Model = ClassRegistry::getObject($alias);
+                    if ($Model === false) {
+                        return;
+                    }
+
+                    $isVirtualField = $Model->isVirtualField($virtual);
+                    $cache[$field] = $virtualFields = $isVirtualField ? [$alias, $virtual] : false;
+                }
+
+                if ($virtualFields) {
+                    list($alias, $virtual) = $virtualFields;
+                    $result[$alias][$virtual] = $value;
+                    unset($result[0][$field]);
+                }
+            }
+            if (empty($result[0])) {
+                unset($result[0]);
+            }
+        }
     }
 }

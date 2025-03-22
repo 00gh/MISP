@@ -177,11 +177,5 @@ CakeLog::config('error', array(
 	'file' => 'error',
 ));
 
-// comment the following out if you do not with to use the background processing (not recommended)
-CakePlugin::loadAll(array(
-	'CakeResque' => array('bootstrap' => true)
-));
-
-
 // Enable the additional exception logging for certain failures (timeouts, out of memory, etc)
 Configure::write('Exception.renderer', 'AppExceptionRenderer');

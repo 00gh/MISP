@@ -1405,7 +1405,7 @@ class EventsController extends AppController
         $warningTagConflicts = array();
         $filters = $this->_harvestParameters($filterData, $exception);
         $analystData = $this->Event->attachAnalystData($event['Event']);
-        $event['Event'] = array_merge($event['Event'], $analystData); 
+        $event['Event'] = array_merge($event['Event'], $analystData);
         $emptyEvent = (empty($event['Object']) && empty($event['Attribute']));
         $this->set('emptyEvent', $emptyEvent);
 
@@ -1632,7 +1632,7 @@ class EventsController extends AppController
     private function __eventViewCommon(array $user)
     {
         $this->set('defaultFilteringRules', self::DEFAULT_FILTERING_RULE);
-        $this->set('typeGroups', array_keys(Attribute::TYPE_GROUPINGS));
+        $this->set('typeGroups', array_keys(MispAttribute::TYPE_GROUPINGS));
 
         $orgTable = $this->Event->Orgc->find('list', array(
             'fields' => array('Orgc.id', 'Orgc.name')
@@ -2360,7 +2360,7 @@ class EventsController extends AppController
                     if (preg_match_all('/[\w\/\-\.]*/', $tmp_name, $matches) && file_exists($file['tmp_name'])) {
                         $data = FileAccessTool::readFromFile($matches[0][0], $file['size']);
                     } else {
-                        throw new NotFoundException(__('Invalid file.'));    
+                        throw new NotFoundException(__('Invalid file.'));
                     }
                     if (!empty($this->request->data['Event']['signature'])) {
                         $signature = $this->request->data['Event']['signature'];
@@ -3348,8 +3348,8 @@ class EventsController extends AppController
         $this->set('command_line_functions', $this->Server->command_line_functions);
         $this->set('broTypes', $broTypes);
         // generate the list of Attribute types
-        $this->loadModel('Attribute');
-        $this->set('sigTypes', array_keys($this->Attribute->typeDefinitions));
+        $this->loadModel('MispAttribute');
+        $this->set('sigTypes', array_keys($this->MispAttribute->typeDefinitions));
         $this->loadModel('Server');
         if (empty(Configure::read('Security.advanced_authkeys'))) {
             $authkey = $this->Event->User->find('first', [
@@ -3361,7 +3361,7 @@ class EventsController extends AppController
         }
         $rpzSettings = $this->Server->retrieveCurrentSettings('Plugin', 'RPZ_');
         $this->set('rpzSettings', $rpzSettings);
-        $this->set('hashTypes', array_keys(Attribute::FILE_HASH_TYPES));
+        $this->set('hashTypes', array_keys(MispAttribute::FILE_HASH_TYPES));
         if ($legacy) {
             $this->render('legacy_automation');
         }
@@ -4131,7 +4131,7 @@ class EventsController extends AppController
         $this->set('event_id', $event['Event']['id']);
         if ($this->request->is('get')) {
             $this->layout = false;
-            $this->request->data['Attribute']['event_id'] = $event['Event']['id'];
+            $this->request->data['MispAttribute']['event_id'] = $event['Event']['id'];
 
         } else if ($this->request->is('post')) {
             App::uses('ComplexTypeTool', 'Tools');
@@ -5332,7 +5332,7 @@ class EventsController extends AppController
         }
 
         $enabledModules = $this->Module->getEnabledModules($this->Auth->user(), false, $type);
-        
+
         if (!is_array($enabledModules) || empty($enabledModules)) {
             throw new MethodNotAllowedException(__('No valid %s options found for this %s.', $type, strtolower($model)));
         }
@@ -5364,7 +5364,7 @@ class EventsController extends AppController
                 throw new MethodNotAllowedException(__('Object not found or you are not authorised to see it.'));
             }
         }
-        
+
         if ($this->request->is('ajax')) {
             $modules = [];
 
@@ -5386,7 +5386,7 @@ class EventsController extends AppController
                     }
                 }
             }
-            
+
             $this->set('id', $id);
             $this->set('modules', $modules);
             $this->set('type', $type);
@@ -5419,7 +5419,7 @@ class EventsController extends AppController
                 if ($model === 'Attribute' || $model === 'ShadowAttribute') {
                     $this->__queryEnrichment($attribute, $module, $options, $type);
                 }
-                
+
                 if ($model === 'Object') {
                     $this->__queryObjectEnrichment($object, $module, $options, $type);
                 }
@@ -6483,8 +6483,8 @@ class EventsController extends AppController
         }
         // do one SQL query with the counts
         // loop over events, update in db
-        $this->loadModel('Attribute');
-        $events = $this->Attribute->find('all', array(
+        $this->loadModel('MispAttribute');
+        $events = $this->MispAttribute->find('all', array(
             'recursive' => -1,
             'fields' => array('event_id', 'count(event_id) as attribute_count'),
             'group' => array('Attribute.event_id'),

@@ -140,7 +140,7 @@ class AttributeValidationTool
             case 'prtn':
             case 'whois-registrant-phone':
             case 'phone-number':
-                if (substr($value, 0, 2) == '00') {
+                if (str_starts_with($value, '00')) {
                     $value = '+' . substr($value, 2);
                 }
                 $value = preg_replace('/\(0\)/', '', $value);
@@ -153,27 +153,27 @@ class AttributeValidationTool
             case 'ip-dst|port':
             case 'ip-src|port':
                 if (substr_count($value, ':') >= 2) { // (ipv6|port) - tokenize ip and port
-                    if (strpos($value, '|')) { // 2001:db8::1|80
+                    if (str_contains($value, '|')) { // 2001:db8::1|80
                         $parts = explode('|', $value);
                     } elseif (str_starts_with($value, '[') && str_contains($value, ']')) { // [2001:db8::1]:80
                         $ipv6 = substr($value, 1, strpos($value, ']')-1);
                         $port = explode(':', substr($value, strpos($value, ']')))[1];
                         $parts = array($ipv6, $port);
-                    } elseif (strpos($value, '.')) { // 2001:db8::1.80
+                    } elseif (str_contains($value, '.')) { // 2001:db8::1.80
                         $parts = explode('.', $value);
-                    } elseif (strpos($value, ' port ')) { // 2001:db8::1 port 80
+                    } elseif (str_contains($value, ' port ')) { // 2001:db8::1 port 80
                         $parts = explode(' port ', $value);
-                    } elseif (strpos($value, 'p')) { // 2001:db8::1p80
+                    } elseif (str_contains($value, 'p')) { // 2001:db8::1p80
                         $parts = explode('p', $value);
-                    } elseif (strpos($value, '#')) { // 2001:db8::1#80
+                    } elseif (str_contains($value, '#')) { // 2001:db8::1#80
                         $parts = explode('#', $value);
                     } else { // 2001:db8::1:80 this one is ambiguous
                         $temp = explode(':', $value);
                         $parts = array(implode(':', array_slice($temp, 0, count($temp)-1)), end($temp));
                     }
-                } elseif (strpos($value, ':')) { // (ipv4:port)
+                } elseif (str_contains($value, ':')) { // (ipv4:port)
                     $parts = explode(':', $value);
-                } elseif (strpos($value, '|')) { // (ipv4|port)
+                } elseif (str_contains($value, '|')) { // (ipv4|port)
                     $parts = explode('|', $value);
                 } else {
                     return $value;
@@ -477,7 +477,7 @@ class AttributeValidationTool
                 return true;
             case 'link':
                 // Moved to a native function whilst still enforcing the scheme as a requirement
-                return (bool)filter_var($value, FILTER_VALIDATE_URL, FILTER_FLAG_SCHEME_REQUIRED);
+                return (bool)filter_var($value, FILTER_VALIDATE_URL);
             case 'hex':
                 return ctype_xdigit($value);
             case 'target-user':
@@ -567,8 +567,10 @@ class AttributeValidationTool
                   }
                 return true;*/
             case 'integer':
-                if (is_int($value)) {
-                    return true;
+                if (is_numeric($value)) {
+                    if (filter_var($value, FILTER_VALIDATE_INT)) {
+                        return true;
+                    }
                 }
                 return __('The value has to be an integer value.');
             case 'iban':
@@ -717,16 +719,16 @@ class AttributeValidationTool
     private static function normalizeIp($value)
     {
         // If IP is a CIDR
-        if (strpos($value, '/')) {
+        if (str_contains($value, '/')) {
             list($ip, $range) = explode('/', $value, 2);
 
             // Compress IPv6
-            if (strpos($ip, ':') && $converted = inet_pton($ip)) {
+            if (str_contains($ip, ':') && $converted = inet_pton($ip)) {
                 $ip = inet_ntop($converted);
             }
 
             // If IP is in CIDR format, but the network is 32 for IPv4 or 128 for IPv6, normalize to non CIDR type
-            if (($range === '32' && strpos($value, '.')) || ($range === '128' && strpos($value, ':'))) {
+            if (($range === '32' && str_contains($value, '.')) || ($range === '128' && str_contains($value, ':'))) {
                 return $ip;
             }
 
@@ -734,7 +736,7 @@ class AttributeValidationTool
         }
 
         // Compress IPv6
-        if (strpos($value, ':') && $converted = inet_pton($value)) {
+        if (str_contains($value, ':') && $converted = inet_pton($value)) {
             return inet_ntop($converted);
         }
 

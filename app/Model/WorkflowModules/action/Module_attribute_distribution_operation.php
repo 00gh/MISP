@@ -15,14 +15,14 @@ class Module_attribute_distribution_operation extends Module_attribute_edition_o
     public $expect_misp_core_format = true;
     public $params = [];
 
-    private $Attribute;
+    private $MispAttribute;
     private $SharingGroup;
 
     public function __construct()
     {
         parent::__construct();
-        $this->Attribute = ClassRegistry::init('Attribute');
-        $distributionLevels = $this->Attribute->shortDist;
+        $this->MispAttribute = ClassRegistry::init('MispAttribute');
+        $distributionLevels = $this->MispAttribute->shortDist;
         $distribution_param = [];
         foreach ($distributionLevels as $i => $text) {
             $distribution_param[] = ['name' => $text, 'value' => $i];

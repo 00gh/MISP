@@ -38,8 +38,8 @@ class ShadowAttributesController extends AppController
 
     private function __accept($id)
     {
-        $this->loadModel('Attribute');
-        $this->Attribute->Behaviors->detach('SysLogLogable.SysLogLogable');
+        $this->loadModel('MispAttribute');
+        $this->MispAttribute->Behaviors->detach('SysLogLogable.SysLogLogable');
         $shadow = $this->ShadowAttribute->find(
             'first',
             array(
@@ -64,7 +64,7 @@ class ShadowAttributesController extends AppController
         // If the old_id is set to anything but 0 then we're dealing with a proposed edit to an existing attribute
         if ($shadow['old_id'] != 0) {
             // Find the live attribute by the shadow attribute's uuid, so we can begin editing it
-            $activeAttribute = $this->Attribute->find('first', [
+            $activeAttribute = $this->MispAttribute->find('first', [
                 'conditions' => ['Attribute.uuid' => $shadow['uuid']],
                 'contain' => ['Event'],
             ]);
@@ -760,7 +760,7 @@ class ShadowAttributesController extends AppController
         if (empty($sa)) {
             throw new NotFoundException(__('Invalid proposal.'));
         }
-        
+
         if (!$this->ShadowAttribute->Attribute->isImage($sa['ShadowAttribute'])) {
             throw new NotFoundException("ShadowAttribute is not an image.");
         }
@@ -1014,7 +1014,7 @@ class ShadowAttributesController extends AppController
                 'Job created.'
             );
 
-            $this->Attribute->getBackgroundJobsTool()->enqueue(
+            $this->MispAttribute->getBackgroundJobsTool()->enqueue(
                 BackgroundJobsTool::DEFAULT_QUEUE,
                 BackgroundJobsTool::CMD_ADMIN,
                 [

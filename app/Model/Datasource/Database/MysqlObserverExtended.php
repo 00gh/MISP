@@ -8,13 +8,13 @@ App::uses('Mysql', 'Model/Datasource/Database');
 class MysqlObserverExtended extends Mysql
 {
     /**
-     * Output MD5 as binary, that is faster and uses less memory
+     * Output SHA1 as binary, that is faster and uses less memory
      * @param string $value
      * @return string
      */
     public function cacheMethodHasher($value)
     {
-        return md5($value, true);
+        return sha1($value, true);
     }
 
     /**

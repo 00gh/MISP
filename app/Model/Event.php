@@ -8,7 +8,7 @@ App::uses('ProcessTool', 'Tools');
 
 /**
  * @property User $User
- * @property Attribute $Attribute
+ * @property MispAttribute $Attribute
  * @property MispObject $Object
  * @property EventReport $EventReport
  * @property ShadowAttribute $ShadowAttribute
@@ -296,7 +296,7 @@ class Event extends AppModel
 
     public $hasMany = array(
         'Attribute' => array(
-            'className' => 'Attribute',
+            'className' => 'MispAttribute',
             'foreignKey' => 'event_id',
             'dependent' => true,    // cascade deletes
             'conditions' => '',
@@ -801,7 +801,7 @@ class Event extends AppModel
         foreach ($objects as $object) {
             // Workaround for different structure in XML/array than what CakePHP expects
             if (isset($data['Event'][$object]) && is_array($data['Event'][$object]) && count($data['Event'][$object])) {
-                if (!is_numeric(implode(array_keys($data['Event'][$object]), ''))) {
+                if (!is_numeric(implode('', array_keys($data['Event'][$object])))) {
                     // single attribute
                     $data['Event'][$object] = array(0 => $data['Event'][$object]);
                 }
@@ -4142,7 +4142,7 @@ class Event extends AppModel
         }
     }
 
-    private function addAttributeToCorrelationDedupTable(array &$value_table, $object_id, int $attribute_id, array $attribute, array $compositeTypes): void
+    private function addAttributeToCorrelationDedupTable(array &$value_table, int|null $object_id, int $attribute_id, array $attribute, array $compositeTypes): void
     {
         $values = [];
         // we need to build our little internal value table with composite types in mind
@@ -5254,8 +5254,8 @@ class Event extends AppModel
             /* TypeGroupings */
             if (
                 $filterType['attributeFilter'] !== 'all'
-                && isset(Attribute::TYPE_GROUPINGS[$filterType['attributeFilter']])
-                && !in_array($attribute['type'], Attribute::TYPE_GROUPINGS[$filterType['attributeFilter']], true)
+                && isset(MispAttribute::TYPE_GROUPINGS[$filterType['attributeFilter']])
+                && !in_array($attribute['type'], MispAttribute::TYPE_GROUPINGS[$filterType['attributeFilter']], true)
             ) {
                 return null;
             }
@@ -5358,8 +5358,8 @@ class Event extends AppModel
             /* TypeGroupings */
             if (
                 $filterType['attributeFilter'] !== 'all'
-                && isset(Attribute::TYPE_GROUPINGS[$filterType['attributeFilter']])
-                && !in_array($proposal['type'], Attribute::TYPE_GROUPINGS[$filterType['attributeFilter']], true)
+                && isset(MispAttribute::TYPE_GROUPINGS[$filterType['attributeFilter']])
+                && !in_array($proposal['type'], MispAttribute::TYPE_GROUPINGS[$filterType['attributeFilter']], true)
             ) {
                 return null;
             }
